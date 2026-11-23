@@ -7,11 +7,11 @@ var tests = []struct {
 	out [][]string
 }{
 	{"cmd: First command.", [][]string{{"cmd"}}},
-	{"cmd, api: Combined work.", [][]string{{"cmd"}, {"api"}}},
-	{"[cmd, api] Combined work.", [][]string{{"cmd"}, {"api"}}},
-	{"[cmd, api]: Combined work.", [][]string{{"cmd"}, {"api"}}},
-	{"parent/child: Nested work.", [][]string{{"parent", "child"}}},
-	{"parent/child, child: Nested and combined work.", [][]string{{"parent", "child"}, {"child"}}},
+	{"cmd, api: Combined item.", [][]string{{"cmd"}, {"api"}}},
+	{"[cmd, api] Combined item.", [][]string{{"cmd"}, {"api"}}},
+	{"[cmd, api]: Combined item.", [][]string{{"cmd"}, {"api"}}},
+	{"parent/child: Nested item.", [][]string{{"parent", "child"}}},
+	{"parent/child, child: Nested and combined item.", [][]string{{"parent", "child"}, {"child"}}},
 }
 
 func TestNewPathInvalidInput(t *testing.T) {

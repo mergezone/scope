@@ -1,6 +1,6 @@
 package scope
 
-// Manager owns a tree of scopes and the work associated with them.
+// Manager owns a tree of scopes and the items associated with them.
 type Manager struct {
 	roots []*Scope
 }
@@ -23,15 +23,15 @@ func (m *Manager) ScopeCount() int {
 	return n
 }
 
-// WorkCount returns the number of unique work items owned by m.
-func (m *Manager) WorkCount() int {
-	work := make([]Work, 0)
+// ItemCount returns the number of unique items owned by m.
+func (m *Manager) ItemCount() int {
+	items := make([]Pathable, 0)
 
 	for _, root := range m.roots {
-		work = root.appendSubtreeWork(work)
+		items = root.appendSubtreeItems(items)
 	}
 
-	return len(unique(work))
+	return len(unique(items))
 }
 
 // GetScope returns the scope at path, or nil if path is nil or does not exist.
@@ -65,15 +65,15 @@ func (m *Manager) GetScope(path *Path) *Scope {
 	return current
 }
 
-// GetWork returns work assigned to any scope whose path ends with prefix, or
+// GetItems returns items assigned to any scope whose path ends with prefix, or
 // to any of that scope's descendants. It returns nil if prefix is nil or no
 // matching scope exists.
-func (m *Manager) GetWork(prefix *Path) []Work {
+func (m *Manager) GetItems(prefix *Path) []Pathable {
 	if prefix == nil {
 		return nil
 	}
 
-	found := make([]Work, 0)
+	found := make([]Pathable, 0)
 	var visit func(*Scope)
 	visit = func(scope *Scope) {
 		if scope.name == prefix.Value {
@@ -89,7 +89,7 @@ func (m *Manager) GetWork(prefix *Path) []Work {
 				match = next
 			}
 			if match != nil {
-				found = match.appendSubtreeWork(found)
+				found = match.appendSubtreeItems(found)
 			}
 		}
 
@@ -105,27 +105,27 @@ func (m *Manager) GetWork(prefix *Path) []Work {
 	return unique(found)
 }
 
-// AddWork adds work to all of the scopes it belongs to. It panics if w is nil,
-// including when w contains a typed nil value.
-func (m *Manager) AddWork(w Work) *Manager {
-	if isNilValue(w) {
-		panic("scope: AddWork called with nil Work")
+// AddItem adds an item to all of the scopes it belongs to. It panics if item is
+// nil, including when item contains a typed nil value.
+func (m *Manager) AddItem(item Pathable) *Manager {
+	if isNilValue(item) {
+		panic("scope: AddItem called with nil Pathable")
 	}
 
-	scopes := m.resolveScopes(w)
+	scopes := m.resolveScopes(item)
 
 	for _, scope := range scopes {
-		scope.addWork(w)
+		scope.addItem(item)
 	}
 
 	return m
 }
 
-// resolveScopes finds or creates the scopes that the work belongs to.
-func (m *Manager) resolveScopes(w Work) []*Scope {
+// resolveScopes finds or creates the scopes that the item belongs to.
+func (m *Manager) resolveScopes(item Pathable) []*Scope {
 	found := make([]*Scope, 0)
 
-	for _, root := range w.Paths() {
+	for _, root := range item.Paths() {
 		var current *Scope
 
 		for segment := root; segment != nil; segment = segment.child {

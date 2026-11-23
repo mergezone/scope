@@ -2,60 +2,60 @@ package scope
 
 import "testing"
 
-func TestAddWorkPanicsOnNil(t *testing.T) {
-	var typedNil *work
+func TestAddItemPanicsOnNil(t *testing.T) {
+	var typedNil *item
 	for _, test := range []struct {
 		name string
-		work Work
+		item Pathable
 	}{
-		{name: "nil interface", work: nil},
-		{name: "typed nil", work: typedNil},
+		{name: "nil interface", item: nil},
+		{name: "typed nil", item: typedNil},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			defer func() {
 				if recover() == nil {
-					t.Fatal("AddWork did not panic for nil Work")
+					t.Fatal("AddItem did not panic for nil Item")
 				}
 			}()
-			NewManager().AddWork(test.work)
+			NewManager().AddItem(test.item)
 		})
 	}
 }
 
-func TestUnscopedWork(t *testing.T) {
-	w := newWork("Unscoped work")
+func TestUnscopedItem(t *testing.T) {
+	item := newItem("Unscoped item")
 
-	m := NewManager().AddWork(&w)
+	m := NewManager().AddItem(&item)
 
 	if m.ScopeCount() != 0 {
-		t.Fatalf("Scope added for unscoped work")
+		t.Fatalf("Scope added for unscoped item")
 	}
 
-	if m.WorkCount() != 0 {
-		t.Fatalf("Work added for unscoped work")
+	if m.ItemCount() != 0 {
+		t.Fatalf("Item added for unscoped item")
 	}
 }
 
-func TestDuplicateWork(t *testing.T) {
-	w1 := newWork("test: Work.")
+func TestDuplicateItem(t *testing.T) {
+	item1 := newItem("test: Item.")
 
-	m := NewManager().AddWork(&w1).AddWork(&w1)
+	m := NewManager().AddItem(&item1).AddItem(&item1)
 
 	if m.ScopeCount() != 1 {
 		t.Fatalf("Incorrect number of scopes created: got %d, want 1", m.ScopeCount())
 	}
 
-	if m.WorkCount() != 1 {
-		t.Fatalf("Incorrect number of work created: got %d, want 1", m.WorkCount())
+	if m.ItemCount() != 1 {
+		t.Fatalf("Incorrect number of items created: got %d, want 1", m.ItemCount())
 	}
 
-	test := m.GetWork(NewPath("test"))
+	test := m.GetItems(NewPath("test"))
 
 	if len(test) != 1 {
-		t.Fatalf("Incorrect amount of work returned for test: got %d, want 1", len(test))
+		t.Fatalf("Incorrect number of items returned for test: got %d, want 1", len(test))
 	}
 
-	// GetScope returns the scope containing the work.
+	// GetScope returns the scope containing the item.
 	s1 := m.GetScope(NewPath("test"))
 	if s1 == nil {
 		t.Fatal("GetScope failed to find scope")
@@ -63,166 +63,166 @@ func TestDuplicateWork(t *testing.T) {
 	if s1.Name() != "test" {
 		t.Fatalf("Scope.Name() = %q, want %q", s1.Name(), "test")
 	}
-	works := s1.Works()
-	if len(works) != 1 || works[0] != test[0] {
-		t.Fatal("Scope does not contain the work returned by GetWork")
+	items := s1.Items()
+	if len(items) != 1 || items[0] != test[0] {
+		t.Fatal("Scope does not contain the item returned by GetItems")
 	}
-	works[0] = nil
-	if len(s1.Works()) != 1 || s1.Works()[0] != test[0] {
-		t.Fatal("Scope.Works() exposed its internal slice")
+	items[0] = nil
+	if len(s1.Items()) != 1 || s1.Items()[0] != test[0] {
+		t.Fatal("Scope.Items() exposed its internal slice")
 	}
 
 	// Test if scope nodes deduplicate by pointer
-	if len(s1.Works()) != 1 {
-		t.Fatalf("Incorrect amount of work in test scope: got %d, want 1", len(s1.Works()))
+	if len(s1.Items()) != 1 {
+		t.Fatalf("Incorrect number of items in test scope: got %d, want 1", len(s1.Items()))
 	}
 
-	w2 := newWork("test: Work.")
-	m.AddWork(&w2)
+	item2 := newItem("test: Item.")
+	m.AddItem(&item2)
 
 	if m.ScopeCount() != 1 {
 		t.Fatalf("Incorrect number of scopes created: got %d, want 1", m.ScopeCount())
 	}
 
-	if m.WorkCount() != 2 {
-		t.Fatalf("Incorrect number of work created: got %d, want 2", m.WorkCount())
+	if m.ItemCount() != 2 {
+		t.Fatalf("Incorrect number of items created: got %d, want 2", m.ItemCount())
 	}
 
-	test = m.GetWork(NewPath("test"))
+	test = m.GetItems(NewPath("test"))
 
 	if len(test) != 2 {
-		t.Fatalf("Incorrect amount of work returned for test: got %d, want 2", len(test))
+		t.Fatalf("Incorrect number of items returned for test: got %d, want 2", len(test))
 	}
 }
 
-func TestWorkFromMatchingRootScope(t *testing.T) {
-	w1 := newWork("cmd: First command.")
-	w2 := newWork("cmd: Second command.")
-	w3 := newWork("api: API.")
+func TestItemFromMatchingRootScope(t *testing.T) {
+	item1 := newItem("cmd: First command.")
+	item2 := newItem("cmd: Second command.")
+	item3 := newItem("api: API.")
 
-	m := NewManager().AddWork(&w1).AddWork(&w2).AddWork(&w3)
+	m := NewManager().AddItem(&item1).AddItem(&item2).AddItem(&item3)
 
 	if m.ScopeCount() != 2 {
 		t.Fatalf("Incorrect number of scopes created: got %d, want 2", m.ScopeCount())
 	}
 
-	if m.WorkCount() != 3 {
-		t.Fatalf("Incorrect number of work created: got %d, want 3", m.WorkCount())
+	if m.ItemCount() != 3 {
+		t.Fatalf("Incorrect number of items created: got %d, want 3", m.ItemCount())
 	}
 
-	cmd := m.GetWork(NewPath("cmd"))
+	cmd := m.GetItems(NewPath("cmd"))
 
 	if len(cmd) != 2 {
-		t.Fatalf("Incorrect amount of work returned for cmd: got %d, want 2", len(cmd))
+		t.Fatalf("Incorrect number of items returned for cmd: got %d, want 2", len(cmd))
 	}
 
-	api := m.GetWork(NewPath("api"))
+	api := m.GetItems(NewPath("api"))
 
 	if len(api) != 1 {
-		t.Fatalf("Incorrect amount of work returned for api: got %d, want 1", len(api))
+		t.Fatalf("Incorrect number of items returned for api: got %d, want 1", len(api))
 	}
 }
 
 func TestNestedScope(t *testing.T) {
-	w1 := newWork("parent: Parent work.")
-	w2 := newWork("parent/child: Nested child work.")
-	w3 := newWork("parent/other: Nested other work.")
+	item1 := newItem("parent: Parent item.")
+	item2 := newItem("parent/child: Nested child item.")
+	item3 := newItem("parent/other: Nested other item.")
 
-	m := NewManager().AddWork(&w1).AddWork(&w2).AddWork(&w3)
+	m := NewManager().AddItem(&item1).AddItem(&item2).AddItem(&item3)
 
 	if m.ScopeCount() != 3 {
 		t.Fatalf("Incorrect number of scopes created: got %d, want 3", m.ScopeCount())
 	}
 
-	if m.WorkCount() != 3 {
-		t.Fatalf("Incorrect number of work created: got %d, want 3", m.WorkCount())
+	if m.ItemCount() != 3 {
+		t.Fatalf("Incorrect number of items created: got %d, want 3", m.ItemCount())
 	}
 
-	parent := m.GetWork(NewPath("parent"))
+	parent := m.GetItems(NewPath("parent"))
 
 	if len(parent) != 3 {
-		t.Fatalf("Incorrect amount of work returned for parent: got %d, want 3", len(parent))
+		t.Fatalf("Incorrect number of items returned for parent: got %d, want 3", len(parent))
 	}
 
-	child := m.GetWork(NewPath("child"))
+	child := m.GetItems(NewPath("child"))
 
 	if len(child) != 1 {
-		t.Fatalf("Incorrect amount of work returned for child: got %d, want 1", len(child))
+		t.Fatalf("Incorrect number of items returned for child: got %d, want 1", len(child))
 	}
 
-	other := m.GetWork(NewPath("other"))
+	other := m.GetItems(NewPath("other"))
 
 	if len(other) != 1 {
-		t.Fatalf("Incorrect amount of work returned for other: got %d, want 1", len(child))
+		t.Fatalf("Incorrect number of items returned for other: got %d, want 1", len(child))
 	}
 
-	par := m.GetWork(NewPath("par"))
+	par := m.GetItems(NewPath("par"))
 
 	if len(par) != 0 {
-		t.Fatalf("Incorrect amount of work returned for par: got %d, want 0", len(child))
+		t.Fatalf("Incorrect number of items returned for par: got %d, want 0", len(child))
 	}
 }
 
-func TestWorkFromMatchingMultiRootScope(t *testing.T) {
-	w1 := newWork("[cmd, api] Combined work.")
-	w2 := newWork("cmd/api: Nested work.")
+func TestItemFromMatchingMultiRootScope(t *testing.T) {
+	item1 := newItem("[cmd, api] Combined item.")
+	item2 := newItem("cmd/api: Nested item.")
 
-	m := NewManager().AddWork(&w1).AddWork(&w2)
+	m := NewManager().AddItem(&item1).AddItem(&item2)
 
 	if m.ScopeCount() != 3 {
 		t.Fatalf("Incorrect number of scopes created: got %d, want 3", m.ScopeCount())
 	}
 
-	if m.WorkCount() != 2 {
-		t.Fatalf("Incorrect number of work created: got %d, want 2", m.WorkCount())
+	if m.ItemCount() != 2 {
+		t.Fatalf("Incorrect number of items created: got %d, want 2", m.ItemCount())
 	}
 
-	cmd := m.GetWork(NewPath("cmd"))
+	cmd := m.GetItems(NewPath("cmd"))
 
 	if len(cmd) != 2 {
-		t.Fatalf("Incorrect amount of work returned for cmd: got %d, want 2", len(cmd))
+		t.Fatalf("Incorrect number of items returned for cmd: got %d, want 2", len(cmd))
 	}
 
-	api := m.GetWork(NewPath("api"))
+	api := m.GetItems(NewPath("api"))
 
 	if len(api) != 2 {
-		t.Fatalf("Incorrect amount of work returned for api: got %d, want 2", len(api))
+		t.Fatalf("Incorrect number of items returned for api: got %d, want 2", len(api))
 	}
 
-	cmdApi := m.GetWork(NewPath("cmd/api"))
+	cmdApi := m.GetItems(NewPath("cmd/api"))
 
 	if len(cmdApi) != 1 {
-		t.Fatalf("Incorrect amount of work returned for cmd/api: got %d, want 1", len(api))
+		t.Fatalf("Incorrect number of items returned for cmd/api: got %d, want 1", len(api))
 	}
 }
 
 func TestCaseSensitivity(t *testing.T) {
-	w1 := newWork("api: Work.")
-	w2 := newWork("API: WORK.")
+	item1 := newItem("api: Item.")
+	item2 := newItem("API: ITEM.")
 
-	m := NewManager().AddWork(&w1).AddWork(&w2)
+	m := NewManager().AddItem(&item1).AddItem(&item2)
 
 	if m.ScopeCount() != 1 {
 		t.Fatalf("Incorrect number of scopes created: got %d, want 1", m.ScopeCount())
 	}
 
-	if m.WorkCount() != 2 {
-		t.Fatalf("Incorrect number of work created: got %d, want 2", m.WorkCount())
+	if m.ItemCount() != 2 {
+		t.Fatalf("Incorrect number of items created: got %d, want 2", m.ItemCount())
 	}
 
-	api := m.GetWork(NewPath("api"))
+	api := m.GetItems(NewPath("api"))
 
 	if len(api) != 2 {
-		t.Fatalf("Incorrect amount of work returned for api: got %d, want 2", len(api))
+		t.Fatalf("Incorrect number of items returned for api: got %d, want 2", len(api))
 	}
 
-	API := m.GetWork(NewPath("API"))
+	API := m.GetItems(NewPath("API"))
 
 	if len(API) != 2 {
-		t.Fatalf("Incorrect amount of work returned for API: got %d, want 2", len(API))
+		t.Fatalf("Incorrect number of items returned for API: got %d, want 2", len(API))
 	}
 }
 
 // TODO(hayden): Add tests for internal scope resolution
 // Shared prefixes and scope reuse: Add a/b, a/c, and another a/b; verify the hierarchy is reused and lookups return the expected items.
-// Repeated ResolveScopes: Call it more than once for the same work and verify it reuses existing scopes without adding duplicates to the manager’s tree.
+// Repeated ResolveScopes: Call it more than once for the same item and verify it reuses existing scopes without adding duplicates to the manager’s tree.

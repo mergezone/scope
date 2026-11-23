@@ -5,8 +5,8 @@ type Scope struct {
 	parent   *Scope
 	children []*Scope
 
-	name string
-	work []Work
+	name  string
+	items []Pathable
 }
 
 func newScope(name string) Scope {
@@ -14,7 +14,7 @@ func newScope(name string) Scope {
 		parent:   nil,
 		children: make([]*Scope, 0),
 		name:     name,
-		work:     make([]Work, 0),
+		items:    make([]Pathable, 0),
 	}
 }
 
@@ -25,9 +25,9 @@ func (s *Scope) Name() string {
 	return s.name
 }
 
-// Works returns a copy of the work directly assigned to the scope.
-func (s *Scope) Works() []Work {
-	return append([]Work(nil), s.work...)
+// Items returns a copy of the items directly assigned to the scope.
+func (s *Scope) Items() []Pathable {
+	return append([]Pathable(nil), s.items...)
 }
 
 // String returns the full slash-separated path of the scope.
@@ -51,19 +51,19 @@ func (s *Scope) ScopeCount() int {
 	return n
 }
 
-func (s *Scope) appendSubtreeWork(work []Work) []Work {
-	for _, w := range s.work {
-		work = append(work, w)
+func (s *Scope) appendSubtreeItems(items []Pathable) []Pathable {
+	for _, item := range s.items {
+		items = append(items, item)
 	}
 
 	for _, child := range s.children {
-		work = child.appendSubtreeWork(work)
+		items = child.appendSubtreeItems(items)
 	}
 
-	return work
+	return items
 }
 
-func (s *Scope) addWork(w Work) {
-	s.work = append(s.work, w)
-	s.work = unique(s.work)
+func (s *Scope) addItem(item Pathable) {
+	s.items = append(s.items, item)
+	s.items = unique(s.items)
 }
